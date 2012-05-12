@@ -66,8 +66,6 @@ sub _init_req {
 
         require MT::Touch;
         MT::Touch->touch( 0, 'config' );
-
-        MT->log('plugin files has been changed.');
     }
 }
 
