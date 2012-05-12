@@ -29,24 +29,22 @@ sub _init_req {
             return;    # error
         }
 
-        my $file_num;
+        my $plugin_path = MT->config->PluginPath;
+        if ( !( -d $plugin_path ) ) {
+            return;    # error
+        }
+
+        my $cmd_check_removed = "find $plugin_path | wc -l";
+        my $file_num = `$cmd_check_removed`;
 
         require File::Spec;
         my $touch_path
             = File::Spec->catfile( MT->config->TempDir, $touch_file );
 
         if ( -e $touch_path ) {
-            my $plugin_path = MT->config->PluginPath;
-            if ( !( -d $plugin_path ) ) {
-                return;    # error
-            }
-
             my $cmd_check_modified
                 = "find $plugin_path -L -newer $touch_path";
             my $ret = `$cmd_check_modified`;
-
-            my $cmd_check_removed = "find $plugin_path | wc -l";
-            $file_num = `$cmd_check_removed`;
 
             open my $fh, '<', $touch_path;
             my $prev_file_num = readline $fh;
