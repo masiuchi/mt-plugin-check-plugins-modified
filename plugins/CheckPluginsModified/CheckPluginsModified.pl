@@ -26,8 +26,10 @@ sub _init_req {
             return;  # error
         }
 
+        my $file_num;
+
         require File::Spec;
-        my $touch_path = File::Spec->catfile( MT->config->TmpDir, $touch_file );
+        my $touch_path = File::Spec->catfile( MT->config->TempDir, $touch_file );
 
         if ( -e $touch_path ) {
             my $plugin_path = MT->config->PluginPath;
@@ -35,19 +37,32 @@ sub _init_req {
                 return;  # error
             }
 
-            my $cmd_check = "find $plugin_path -type f -newer $touch_path";
-            my $ret       = `$cmd_check`;
-            if ( !$ret ) {
+            my $cmd_check_modified = "find $plugin_path -L -newer $touch_path";
+            my $ret = `$cmd_check_modified`;
+
+            my $cmd_check_removed = "find $plugin_path | wc -l";
+            $file_num = `$cmd_check_removed`;
+
+            open my $fh, '<', $touch_path;
+            my $prev_file_num = readline $fh;
+            close $fh;
+
+            chomp $prev_file_num;
+
+            if ( $file_num == $prev_file_num && !$ret ) {
                 return;  # no change
             }
         }
 
         # some changes
-        my $cmd_touch = "touch $touch_path";
-        `$cmd_touch`;
+        open my $fh, '>', $touch_path;
+        print $fh $file_num;
+        close $fh;
 
         require MT::Touch;
         MT::Touch->touch( 0, 'config' );
+
+        MT->log( 'plugin files has been changed.' );
     }
 }
 
