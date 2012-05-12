@@ -3,41 +3,46 @@ use strict;
 use warnings;
 use base 'MT::Plugin';
 
-our $VERSION = '0.01';
-our $NAME    = ( split /::/, __PACKAGE__ )[-1];
+our $VERSION = '0.02';
+our $NAME = ( split /::/, __PACKAGE__ )[-1];
 
-my $plugin = __PACKAGE__->new({
-    name         => $NAME,
-    id           => lc $NAME,
-    key          => lc $NAME,
-    version      => $VERSION,
-    author_link  => 'https://github.com/masiuchi',
-    plugin_link  => 'https://github.com/masiuchi/mt-plugin-check-plugins-modified',
-    description  => 'Restart FastCGI process if there are some changes in plugins directory.',
-    init_request => \&_init_req,
-});
-MT->add_plugin( $plugin );
+my $plugin = __PACKAGE__->new(
+    {   name        => $NAME,
+        id          => lc $NAME,
+        key         => lc $NAME,
+        version     => $VERSION,
+        author_link => 'https://github.com/masiuchi',
+        plugin_link =>
+            'https://github.com/masiuchi/mt-plugin-check-plugins-modified',
+        description =>
+            'Restart FastCGI process if there are some changes in plugins directory.',
+        init_request => \&_init_req,
+    }
+);
+MT->add_plugin($plugin);
 
 sub _init_req {
     if ( $ENV{FAST_CGI} ) {
         my $touch_file = 'check_plugins_modified';
         my $touch_dir  = MT->config->TempDir;
         if ( !( -d $touch_dir ) ) {
-            return;  # error
+            return;    # error
         }
 
         my $file_num;
 
         require File::Spec;
-        my $touch_path = File::Spec->catfile( MT->config->TempDir, $touch_file );
+        my $touch_path
+            = File::Spec->catfile( MT->config->TempDir, $touch_file );
 
         if ( -e $touch_path ) {
             my $plugin_path = MT->config->PluginPath;
             if ( !( -d $plugin_path ) ) {
-                return;  # error
+                return;    # error
             }
 
-            my $cmd_check_modified = "find $plugin_path -L -newer $touch_path";
+            my $cmd_check_modified
+                = "find $plugin_path -L -newer $touch_path";
             my $ret = `$cmd_check_modified`;
 
             my $cmd_check_removed = "find $plugin_path | wc -l";
@@ -50,7 +55,7 @@ sub _init_req {
             chomp $prev_file_num;
 
             if ( $file_num == $prev_file_num && !$ret ) {
-                return;  # no change
+                return;    # no change
             }
         }
 
@@ -62,7 +67,7 @@ sub _init_req {
         require MT::Touch;
         MT::Touch->touch( 0, 'config' );
 
-        MT->log( 'plugin files has been changed.' );
+        MT->log('plugin files has been changed.');
     }
 }
 
