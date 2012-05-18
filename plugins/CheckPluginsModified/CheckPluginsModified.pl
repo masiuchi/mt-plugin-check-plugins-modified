@@ -43,7 +43,7 @@ sub _init_req {
 
         if ( -e $touch_path ) {
             my $cmd_check_modified
-                = "find $plugin_path -L -newer $touch_path";
+                = "find $plugin_path -newer $touch_path";
             my $ret = `$cmd_check_modified`;
 
             open my $fh, '<', $touch_path;
